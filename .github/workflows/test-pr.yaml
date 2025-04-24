@@ -1,0 +1,85 @@
+name: test PR
+
+on:
+  pull_request:
+    branches:
+    - "*"
+  push:
+    branches:
+    - "main"
+    tags:
+    - "*"
+
+jobs:
+  check-go-mod:
+    timeout-minutes: 10
+    name: Check Go modules
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - run: go mod tidy
+
+    - name: Check diff
+      run: make verify.diff
+
+  lint:
+    timeout-minutes: 10
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: Run lint
+      run: make lint
+
+  unit-test:
+    timeout-minutes: 10
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: Set up gotestfmt
+      uses: GoTestTools/gotestfmt-action@7dd37bbcc925453b6d7465164cf3bcbd87bc691d # v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Run tests
+      # For now use manual go test invocation but when this is available as
+      # Makefile target switch to using it.
+      run: |
+        set -euo pipefail
+        go test -json -v ./... 2>&1 | tee /tmp/gotest.log | gotestfmt -hide successful-downloads,empty-packages -showteststatus
+
+    - name: Upload test log
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-log
+        path: /tmp/gotest.log
+        if-no-files-found: error

@@ -1,0 +1,114 @@
+run:
+  timeout: 5m
+linters:
+  enable:
+  - asciicheck
+  - bodyclose
+  - dogsled
+  - durationcheck
+  - copyloopvar
+  - errcheck
+  - errorlint
+  - exhaustive
+  - forbidigo
+  - gci
+  - gocritic
+  - godot
+  - gofmt
+  - gofumpt
+  - goimports
+  - gomodguard
+  - gosec
+  - gosimple
+  - govet
+  - importas
+  - ineffassign
+  - misspell
+  - mnd
+  - nakedret
+  - nilerr
+  - nolintlint
+  - predeclared
+  - revive
+  - staticcheck
+  - typecheck
+  - unconvert
+  - unparam
+  - unused
+  - wastedassign
+linters-settings:
+  exhaustive:
+    default-signifies-exhaustive: true
+  mnd:
+    ignored-numbers:
+    - '2'
+  gci:
+    sections:
+    - standard
+    - default
+    - prefix(github.com/khulnasoft/kubernetes-telemetry)
+  importas:
+    no-unaliased: true
+    alias:
+    - pkg: k8s.io/api/core/v1
+      alias: corev1
+    - pkg: k8s.io/api/apps/v1
+      alias: appsv1
+    - pkg: k8s.io/api/admission/v1
+      alias: admissionv1
+    - pkg: k8s.io/api/networking/v1
+      alias: netv1
+    - pkg: k8s.io/api/networking/v1beta1
+      alias: netv1beta1
+    - pkg: k8s.io/api/discovery/v1
+      alias: discoveryv1
+
+    - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+      alias: metav1
+    - pkg: sigs.k8s.io/gateway-api/apis/(v[\w\d]+)
+      alias: gateway${1}
+  forbidigo:
+    exclude-godoc-examples: false
+    forbid:
+    - 'CoreV1\(\)\.Endpoints(# use DiscoveryV1 EndpointSlices API instead)?'
+    - 'corev1\.Endpoint(# use DiscoveryV1 EndpointSlices API instead)?'
+  revive:
+    severity: error
+    rules:
+    - name: exported
+      disabled: false
+  gomodguard:
+    blocked:
+      modules:
+      - github.com/ghodss/yaml:
+          recommendations:
+          - sigs.k8s.io/yaml
+      - gopkg.in/yaml.v2:
+          recommendations:
+          - sigs.k8s.io/yaml
+      - gopkg.in/yaml.v3:
+          recommendations:
+          - sigs.k8s.io/yaml
+      - github.com/pkg/errors:
+          recommendations:
+          - fmt
+          - errors
+      - golang.org/x/net/context:
+          recommendations:
+          - context
+issues:
+  fix: true
+  # Independently of option `exclude` we use default exclude patterns,
+  # it can be disabled by this option.
+  # To list all excluded by default patterns execute `golangci-lint run --help`.
+  # Default: true.
+  exclude-use-default: false
+
+  exclude:
+  # EXC0001 errcheck: Almost all programs ignore errors on these functions and in most cases it's ok
+  - Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked
+  # EXC0005 staticcheck: Developers tend to write in C-style with an explicit 'break' in a 'switch', so it's ok to ignore
+  - ineffective break statement. Did you mean to break out of the outer loop
+
+  - exported const [a-zA-Z_0-9]+ should have comment(.+)...
+  - exported method [a-zA-Z_0-9.]+ should have comment(.+)...
